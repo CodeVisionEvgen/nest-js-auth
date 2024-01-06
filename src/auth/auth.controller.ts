@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Post,
   Response,
   UnauthorizedException,
@@ -68,5 +69,12 @@ export class AuthController {
     response.setHeader('authorization', tokens.AccessToken);
     response.cookie('refresh', tokens.RefreshToken, { httpOnly: true });
     response.status(201).json({ nick: newUser.nick, email: newUser.email });
+  }
+
+  @Get('logout')
+  logout(@Response() response: ResType) {
+    response.setHeader('authorization', '');
+    response.cookie('refresh', '');
+    response.status(200).json({ ok: 1 });
   }
 }
