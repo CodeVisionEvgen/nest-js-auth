@@ -4,15 +4,17 @@ import {
   Controller,
   Post,
   Response,
+  UnauthorizedException,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { SignupAuthDto } from './dto/signup.dto';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
-import { USER_IS_EXIST } from './auth.constants';
+import { NICK_OR_PASSWORD_WRONG, USER_IS_EXIST } from './auth.constants';
 import * as bcrypt from 'bcrypt';
 import { Response as ResType } from 'express';
+import { SigninAuthDto } from './dto/signin.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,6 +22,29 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
   ) {}
+
+  @UsePipes(new ValidationPipe())
+  @Post('/signin')
+  async signin(@Body() body: SigninAuthDto, @Response() response: ResType) {
+    const user = await this.userService.FindUserByNick(body.nick);
+
+    if (!user) throw new UnauthorizedException(NICK_OR_PASSWORD_WRONG);
+
+    const isValidPassword = await bcrypt.compare(body.password, user.password);
+
+    if (!isValidPassword)
+      throw new UnauthorizedException(NICK_OR_PASSWORD_WRONG);
+
+    const Tokens = this.authService.CreateTokens({
+      sub: user._id,
+      nick: user.nick,
+      email: user.email,
+    });
+
+    response.setHeader('authorization', Tokens.AccessToken);
+    response.cookie('refresh', Tokens.RefreshToken, { httpOnly: true });
+    response.status(201).json({ nick: user.nick, email: user.email });
+  }
 
   @UsePipes(new ValidationPipe())
   @Post('/signup')
@@ -32,8 +57,6 @@ export class AuthController {
     const newUser = await this.userService.new(body);
 
     delete body.password;
-
-    console.log(body);
 
     const tokens = this.authService.CreateTokens({
       sub: newUser._id,

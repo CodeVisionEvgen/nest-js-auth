@@ -21,4 +21,8 @@ export class UserService {
   async FindUserById(_id: Types.ObjectId) {
     return await this.userModel.findById(_id);
   }
+
+  async FindUserByNick(nick: string) {
+    return await this.userModel.findOne({ nick });
+  }
 }
