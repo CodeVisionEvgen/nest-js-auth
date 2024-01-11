@@ -26,6 +26,7 @@ export class AuthController {
   @UsePipes(new ValidationPipe())
   @Post('/signin')
   async signin(@Body() body: SigninAuthDto, @Response() response: ResType) {
+    console.log(body);
     const user = await this.userService.FindUserByNick(body.nick);
 
     if (!user) throw new UnauthorizedException(NICK_OR_PASSWORD_WRONG);
