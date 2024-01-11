@@ -12,10 +12,16 @@ import {
 import { SignupAuthDto } from './dto/signup.dto';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
-import { NICK_OR_PASSWORD_WRONG, USER_IS_EXIST } from './auth.constants';
+import {
+  NICK_OR_PASSWORD_WRONG,
+  TOKEN_IS_NOT_EXIST,
+  USER_IS_EXIST,
+} from './auth.constants';
 import * as bcrypt from 'bcrypt';
 import { Response as ResType } from 'express';
 import { SigninAuthDto } from './dto/signin.dto';
+import { VerifyTokenDto } from './dto/verify-tokens.dto';
+import { JsonWebTokenError } from '@nestjs/jwt';
 
 @Controller('auth')
 export class AuthController {
@@ -76,5 +82,24 @@ export class AuthController {
     response.setHeader('authorization', '');
     response.cookie('refresh', '');
     response.status(200).json({ ok: 1 });
+  }
+
+  @UsePipes(new ValidationPipe())
+  @Post('verify')
+  async verifyTokens(@Body() body: VerifyTokenDto) {
+    const refresh = await this.authService.FindToken(body.refresh);
+    if (!refresh) throw new UnauthorizedException(TOKEN_IS_NOT_EXIST);
+
+    try {
+      const authorization = await this.authService.VefifyToken(
+        body.authorization,
+        'access',
+      );
+      return authorization;
+    } catch (error) {
+      if (error instanceof JsonWebTokenError) {
+        throw new UnauthorizedException();
+      }
+    }
   }
 }
