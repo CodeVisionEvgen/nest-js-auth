@@ -9,7 +9,7 @@ export class SignupAuthDto {
     message: DATA_IS_MUST_TO_BE_STRING('Нік'),
   })
   @IsNotEmpty({
-    message: DATA_IS_MUST_TO_BE_STRING('Нік'),
+    message: DATA_IS_MUST_TO_BE_EXISTS('Нік'),
   })
   nick: string;
 
@@ -17,7 +17,7 @@ export class SignupAuthDto {
     message: DATA_IS_MUST_TO_BE_STRING('Почта'),
   })
   @IsNotEmpty({
-    message: DATA_IS_MUST_TO_BE_STRING('Почта'),
+    message: DATA_IS_MUST_TO_BE_EXISTS('Почта'),
   })
   email: string;
 

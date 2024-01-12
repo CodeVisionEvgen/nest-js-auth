@@ -9,7 +9,7 @@ export class SigninAuthDto {
     message: DATA_IS_MUST_TO_BE_STRING('Нік'),
   })
   @IsNotEmpty({
-    message: DATA_IS_MUST_TO_BE_STRING('Нік'),
+    message: DATA_IS_MUST_TO_BE_EXISTS('Нік'),
   })
   nick: string;
 

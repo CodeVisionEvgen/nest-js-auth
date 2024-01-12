@@ -1,7 +1,9 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Body,
   Controller,
+  HttpCode,
   Post,
   Response,
   UnauthorizedException,
@@ -11,10 +13,16 @@ import {
 import { SignupAuthDto } from './dto/signup.dto';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
-import { NICK_OR_PASSWORD_WRONG, USER_IS_EXIST } from './auth.constants';
+import {
+  NICK_OR_PASSWORD_WRONG,
+  TOKEN_IS_NOT_EXIST,
+  USER_IS_EXIST,
+} from './auth.constants';
 import * as bcrypt from 'bcrypt';
 import { Response as ResType } from 'express';
 import { SigninAuthDto } from './dto/signin.dto';
+import { JsonWebTokenError } from '@nestjs/jwt';
+import { VerifyTokenDto } from './dto/verify-tokens.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -69,5 +77,24 @@ export class AuthController {
     response.setHeader('authorization', tokens.AccessToken);
     response.cookie('refresh', tokens.RefreshToken, { httpOnly: true });
     response.status(201).json({ nick: newUser.nick, email: newUser.email });
+  }
+
+  @UsePipes(new ValidationPipe())
+  @HttpCode(200)
+  @Post('verify')
+  async verifyTokens(@Body() body: VerifyTokenDto) {
+    const refresh = await this.authService.FindToken(body.refresh);
+    if (!refresh) throw new UnauthorizedException(TOKEN_IS_NOT_EXIST);
+
+    try {
+      const authorization = await this.authService.VefifyToken(
+        body.authorization,
+        'access',
+      );
+      return authorization;
+    } catch (error) {
+      if (error instanceof JsonWebTokenError) throw new UnauthorizedException();
+      else throw new BadGatewayException();
+    }
   }
 }
